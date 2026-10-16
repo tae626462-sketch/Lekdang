@@ -1,0 +1,17 @@
+{
+  "name": "เลขดังวัดผล",
+  "short_name": "เลขดัง",
+  "description": "ผลสลากกินแบ่งรัฐบาลแบบสด ตรวจสลาก และเลขดังแต่ละงวดเทียบกับโอกาสจริง",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EBF1EE",
+  "theme_color": "#12302A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
