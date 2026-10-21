@@ -194,6 +194,18 @@ details.plain summary{cursor:pointer;font-weight:600;font-family:var(--display)}
 .share-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .share-links .btn{text-align:center;text-decoration:none;display:block}
 #shareText{font-family:var(--body);font-size:.9rem;letter-spacing:0;min-height:96px}
+.top3 h2{font-size:1.1rem}
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.pod{border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink);min-width:0}
+.pod.first{background:var(--gold-soft);border-color:var(--gold)}
+.pod .rank{font-size:.75rem;color:var(--muted)}
+.pod.first .rank{color:var(--gold);font-weight:600}
+.pod .pn{font-family:var(--display);font-weight:700;font-size:clamp(2rem,10vw,2.8rem);line-height:1.1;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.pod .ps{font-size:.78rem;color:var(--muted)}
+.three-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.88rem}
+.three-row button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 12px;font-family:var(--display);font-weight:600;letter-spacing:.05em}
+.stub-top3{margin-top:4px;font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.stub-top3 b{font-family:var(--display);font-size:1.05rem;color:var(--gold);letter-spacing:.05em}
 .install{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;border-color:var(--gold)}
 .install img{width:48px;height:48px;border-radius:11px}
 .install-txt{min-width:0}
@@ -465,6 +477,13 @@ function hotFor(date){
   }));
   return [...map.values()].sort((a,b) => b.srcs.length - a.srcs.length || a.n.length - b.n.length || a.n.localeCompare(b.n));
 }
+function topHot(date){
+  const hot = hotFor(date);
+  const two = hot.filter(h => h.n.length === 2), three = hot.filter(h => h.n.length === 3);
+  const top = two.slice(0,3), cut = top.length === 3 ? top[2].srcs.length : 0;
+  const tied = cut > 1 ? two.slice(3).filter(h => h.srcs.length === cut).map(h => h.n) : [];
+  return {top, tied, three: three.slice(0,3).filter(h => h.srcs.length > 1 || three.length <= 3)};
+}
 function evalDraw(hot, r){
   const H2 = new Set(hot.filter(h=>h.n.length===2).map(h=>h.n));
   const H3 = new Set(hot.filter(h=>h.n.length===3).map(h=>h.n));
@@ -628,7 +647,7 @@ function renderStub(){
   else status = `<span class="chip">รอผลรางวัล</span>`;
   $("stub").innerHTML = `
     <div class="stub-top">
-      <div><div class="eyebrow">สลากกินแบ่งรัฐบาล · งวดวันที่</div><h1 class="num">${thDate(currentDate)}</h1></div>
+      <div><div class="eyebrow">สลากกินแบ่งรัฐบาล · งวดวันที่</div><h1 class="num">${thDate(currentDate)}</h1>${(() => { const T = topHot(currentDate).top; return T.length ? `<button class="stub-top3" type="button" data-go="hot" style="border:0;background:none;padding:0;cursor:pointer">เลขเด่น ${T.map(h => `<b>${h.n}</b>`).join(" ")}</button>` : ""; })()}</div>
       <div class="stub-act">${status}<button class="btn ghost sm" type="button" data-share="app">แชร์แอพ</button></div>
     </div>
     <hr class="perf">
@@ -775,7 +794,16 @@ function renderHot(){
     const maxSrc = Math.max(...hot.map(h=>h.srcs.length));
     const ev = evalDraw(hot, null);
     const urls = [...new Set(allHot().filter(h=>h.d===currentDate && h.url).map(h=>h.url))];
-    el.innerHTML = `
+    const TH = topHot(currentDate);
+    const podium = TH.top.length ? `
+      <div class="panel top3">
+        <div class="head-row"><h2>3 เลขเด่นที่สุด งวด ${thDate(currentDate)}</h2><span class="small muted">นับจากจำนวนแหล่งที่พูดถึง</span></div>
+        <div class="podium">${TH.top.map((h,i) => `<button class="pod ${i===0?"first":""}" type="button" data-num="${h.n}"><span class="rank">อันดับ ${i+1}</span><span class="pn">${h.n}</span><span class="ps">${h.srcs.length} แหล่ง</span></button>`).join("")}</div>
+        ${TH.tied.length ? `<p class="small muted" style="margin-top:8px">มีเลขที่ถูกพูดถึงเท่ากับอันดับ 3 อีก: <b class="num">${TH.tied.join(" ")}</b></p>` : ""}
+        ${TH.three.length ? `<div class="three-row"><span class="muted">3 ตัวเด่น</span>${TH.three.map(h => `<button type="button" data-num="${h.n}">${h.n}</button>`).join("")}</div>` : ""}
+        <p class="small muted" style="margin-top:10px">เด่นหมายถึงถูกพูดถึงมากที่สุด ไม่ได้มีโอกาสถูกมากกว่า ทุกเลขยังเป็น 1 ใน 100 สำหรับเลขท้าย 2 ตัว</p>
+      </div>` : "";
+    el.innerHTML = podium + `
       <div class="note">ทุกเลขมีโอกาสเท่ากัน เพราะการออกรางวัลเป็นการสุ่ม แถบสีทองคือความดัง (จำนวนแหล่งที่พูดถึง) ส่วนตัวเลขด้านขวาคือโอกาสจริง</div>
       <div class="panel">
         <div class="head-row" style="margin-bottom:6px">
@@ -954,7 +982,7 @@ document.addEventListener("click", async e => {
   const sh = e.target.closest("[data-share]"); if (sh) return openShare(sh.dataset.share);
   if (e.target.id === "nativeShare") return nativeShare();
   if (e.target.id === "copyShare") return copyShare();
-  const go = e.target.closest("[data-go]"); if (go){ chkDate = resDate; chkPinned = resDate !== checkerDefault(); renderChecker(); return setTab(go.dataset.go); }
+  const go = e.target.closest("[data-go]"); if (go){ if (go.dataset.go === "chk"){ chkDate = resDate; chkPinned = resDate !== checkerDefault(); renderChecker(); } return setTab(go.dataset.go); }
   const f = e.target.closest("[data-filter]"); if (f){ filter = f.dataset.filter; return renderHot(); }
   const num = e.target.closest("[data-num]"); if (num) return openNum(num.dataset.num);
   if (e.target.closest("#closeSheet") || e.target.id === "sheetBg") return closeSheet();
