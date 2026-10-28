@@ -65,9 +65,9 @@ a{color:var(--cell)}
 @media (max-width:420px){.stub-bottom{grid-template-columns:1fr 1fr}}
 
 /* tabs */
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:3px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:3px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
-.tabs button{border:0;background:transparent;border-radius:9px;padding:8px 2px;font-size:.84rem;font-weight:500;color:var(--muted);white-space:nowrap}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:8px 0;font-size:.8rem;font-weight:500;color:var(--muted);white-space:nowrap}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
 
 section{display:flex;flex-direction:column;gap:14px}
@@ -206,6 +206,32 @@ details.plain summary{cursor:pointer;font-weight:600;font-family:var(--display)}
 .three-row button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 12px;font-family:var(--display);font-weight:600;letter-spacing:.05em}
 .stub-top3{margin-top:4px;font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
 .stub-top3 b{font-family:var(--display);font-size:1.05rem;color:var(--gold);letter-spacing:.05em}
+.fx-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.fx-sum .box{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fx-sum .v{font-family:var(--display);font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums}
+.fx-sum .k{font-size:.75rem;color:var(--muted)}
+.fx-card{display:grid;grid-template-columns:1fr auto;gap:6px 14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.fx-card:last-child{border-bottom:0}
+.fx-card h3{font-size:1rem}
+.fx-how{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.fx-next{grid-row:1 / span 2;grid-column:2;text-align:center;align-self:start;border:1px solid var(--line);border-radius:10px;padding:6px 12px;min-width:76px;background:var(--paper)}
+.fx-next .k{font-size:.68rem;color:var(--muted)}
+.fx-next .v{font-family:var(--display);font-size:1.7rem;font-weight:700;line-height:1.1;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.fx-stat{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;font-size:.85rem}
+.fx-bars{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:.75rem;color:var(--muted)}
+.fx-bars .track{height:8px;background:var(--paper);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.fx-bars .fill{height:100%;border-radius:4px}
+.fx-bars .fill.real{background:var(--cell)}
+.fx-bars .fill.rand{background:var(--muted);opacity:.55}
+.fx-bars .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.fx-mine{border-color:var(--gold)}
+.mine-digits{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.mine-digits .dg{font-family:var(--display);font-weight:700;font-size:2.4rem;line-height:1;width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);color:var(--gold)}
+.mine-digits .lb{font-size:.8rem;color:var(--muted)}
+.numgrid.set2{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));font-size:1.05rem}
+.numgrid.set2 span{text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 0}
+.numgrid.set2 span.pair{background:var(--gold-soft);color:var(--gold);border-color:var(--gold)}
+.fx-pickbtn{margin-top:6px}
 .install{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;border-color:var(--gold)}
 .install img{width:48px;height:48px;border-radius:11px}
 .install-txt{min-width:0}
@@ -228,6 +254,7 @@ footer a{color:var(--muted)}
     <button role="tab" id="t-res" aria-selected="true" data-tab="res">ผลรางวัล</button>
     <button role="tab" id="t-chk" aria-selected="false" data-tab="chk">ตรวจสลาก</button>
     <button role="tab" id="t-hot" aria-selected="false" data-tab="hot">เลขดัง</button>
+    <button role="tab" id="t-fx" aria-selected="false" data-tab="fx">สูตร</button>
     <button role="tab" id="t-hist" aria-selected="false" data-tab="hist">ย้อนหลัง</button>
     <button role="tab" id="t-stat" aria-selected="false" data-tab="stat">สถิติ</button>
   </nav>
@@ -298,6 +325,7 @@ footer a{color:var(--muted)}
     </div>
   </section>
 
+  <section id="p-fx" hidden></section>
   <section id="p-hist" hidden></section>
   <section id="p-stat" hidden></section>
 
@@ -320,6 +348,10 @@ const SEED_HOT = [
   {d:"2026-11-01", src:"10 เลขมาแรง หวยแม่ทำเนียน", nums:["52","23","89","24","93","59","15","26","30","13"], url:"https://www.brighttv.co.th/lotto/trending-lottery-numbers-for-november"},
   {d:"2026-11-01", src:"ปฏิทินคำชะโนด", nums:["50","34","51","37","54","35","62","69","27","28","52","56","59","02","06","09","369","362"], url:"https://www.bankeela.info/lotto/403684/"},
   {d:"2026-11-01", src:"หางประทัดแก้บนหลวงพ่อใหญ่ พนัสนิคม", nums:["356","20","903","81","217","17"], url:"https://www.khaosod.co.th/lottery/news_10441886"},
+  {d:"2026-11-01", src:"ปฏิทินหลวงปู่ศิลา", nums:["51","53","55","41","13","43","45","15","14","52","451","513","152","355","241"], url:"https://thethaiger.com/th/news/1623054/"},
+  {d:"2026-11-01", src:"เลขมงคลวันปิยมหาราช (ร.5)", nums:["05","23","10","53","42","20","09","96","11","16","116","453","396","411"], url:"https://thethaiger.com/th/news/1623228/"},
+  {d:"2026-11-01", src:"10 เลขดัง สลาก 5 ภาค", nums:["97","69","40","76","65","25","94","58","09","89"], url:"https://thethaiger.com/th/news/1623205/"},
+  {d:"2026-11-01", src:"หางประทัดมุทิตาจิตอาจารย์ฤาษีเณร", nums:["30","610"], url:"https://www.thairath.co.th/lottery/news/2967793"},
   {d:"2026-10-16", src:"เลขขายดีอันดับ 1 (เครื่องบินขับไล่ Gripen)", nums:["403"], url:"https://www.dailynews.co.th/news/6272337/"},
   {d:"2026-10-16", src:"10 อันดับเลขขายดีแผงลอตเตอรี่", nums:["03","39","91","92","71","24","13","89","09","15"], url:"https://www.dailynews.co.th/news/6272337/"},
   {d:"2026-10-16", src:"100 ปีชาตกาลหลวงพ่อคูณ", nums:["103","224","04","91","92","71","03"], url:"https://www.dailynews.co.th/news/6272337/"},
@@ -647,7 +679,7 @@ function renderStub(){
   else status = `<span class="chip">รอผลรางวัล</span>`;
   $("stub").innerHTML = `
     <div class="stub-top">
-      <div><div class="eyebrow">สลากกินแบ่งรัฐบาล · งวดวันที่</div><h1 class="num">${thDate(currentDate)}</h1>${(() => { const T = topHot(currentDate).top; return T.length ? `<button class="stub-top3" type="button" data-go="hot" style="border:0;background:none;padding:0;cursor:pointer">เลขเด่น ${T.map(h => `<b>${h.n}</b>`).join(" ")}</button>` : ""; })()}</div>
+      <div><div class="eyebrow">สลากกินแบ่งรัฐบาล · งวดวันที่</div><h1 class="num">${thDate(currentDate)}</h1>${(() => { const T = topHot(currentDate).top; return T.length ? `<button class="stub-top3" type="button" data-go="hot" style="border:0;background:none;padding:0;cursor:pointer">เลขเด่น ${T.map(h => `<b>${h.n}</b>`).join(" ")}</button>` : ""; })()}${(() => { if (!fxPick.length || !draws.length) return ""; const P = pickSet(draws[draws.length-1]); const show = P.D.length ? P.D : P.twos; return show.length ? `<button class="stub-top3" type="button" data-go="fx" style="border:0;background:none;padding:0;cursor:pointer">สูตรของฉัน ${show.map(n => `<b>${n}</b>`).join(" ")}</button>` : ""; })()}</div>
       <div class="stub-act">${status}<button class="btn ghost sm" type="button" data-share="app">แชร์แอพ</button></div>
     </div>
     <hr class="perf">
@@ -833,6 +865,149 @@ function renderHot(){
     + extraRes.map((r,i)=>`<div><span>ผลที่กรอกเอง ${thDate(r.d)} · <span class="num">${r.f} / ${r.t}</span></span><button data-del-res="${i}">ลบ</button></div>`).join("");
 }
 
+/* ---------- formulas: popular "สูตร" tested on every past draw ---------- */
+const dsum = s => s.split("").reduce((a,c) => a + +c, 0);
+const plus1 = s => s.split("").map(c => (+c + 1) % 10).join("");
+const FORMULAS = [
+  {id:"sum",  kind:"digit", name:"ผลรวมหลักรางวัลที่ 1", desc:"บวกทุกหลักของรางวัลที่ 1 เอาหลักหน่วยเป็นเลขเด่น",
+   calc: r => { const s = dsum(r.f); return {v:String(s % 10), how:`${r.f.split("").join("+")} = ${s} → ${s % 10}`}; }},
+  {id:"diff", kind:"digit", name:"ลบหลักเลขท้าย 2 ตัว", desc:"เอาสองหลักของเลขท้าย 2 ตัวมาลบกัน",
+   calc: r => { const a = +r.t[0], b = +r.t[1], d = Math.abs(a - b); return {v:String(d), how:`|${a}−${b}| = ${d}`}; }},
+  {id:"p1",   kind:"two", name:"+1 ทุกหลัก เลขท้าย 2 ตัว", desc:"บวก 1 ทุกหลักของเลขท้าย 2 ตัวงวดก่อน (9 กลายเป็น 0)",
+   calc: r => ({v:plus1(r.t), how:`${r.t} → ${plus1(r.t)}`})},
+  {id:"rev",  kind:"two", name:"กลับเลขท้าย 2 ตัว", desc:"สลับหลักเลขท้าย 2 ตัวงวดก่อน",
+   calc: r => { const v = r.t[1] + r.t[0]; return {v, how:`${r.t} → ${v}`}; }},
+  {id:"add",  kind:"two", name:"ท้ายบน + ท้ายล่าง", desc:"2 ตัวท้ายของรางวัลที่ 1 บวกเลขท้าย 2 ตัว เอา 2 หลักท้าย",
+   calc: r => { const a = r.f.slice(-2), s = +a + +r.t, v = String(s % 100).padStart(2,"0"); return {v, how:`${a} + ${r.t} = ${s} → ${v}`}; }},
+  {id:"top2", kind:"two", name:"ท้ายบนมาเป็นล่าง", desc:"เอา 2 ตัวท้ายของรางวัลที่ 1 งวดก่อนมาแทงเลขท้าย 2 ตัว",
+   calc: r => ({v:r.f.slice(-2), how:`${r.f} → ${r.f.slice(-2)}`})},
+  {id:"same", kind:"two", name:"เลขท้ายเดิมซ้ำ", desc:"แทงเลขท้าย 2 ตัวเดิมของงวดก่อน",
+   calc: r => ({v:r.t, how:`${r.t} → ${r.t}`})},
+  {id:"p111", kind:"three", name:"3 ตัวบน +111", desc:"3 ตัวท้ายของรางวัลที่ 1 บวก 111 (บวก 1 ทุกหลัก) แทงเลข 3 ตัว",
+   calc: r => { const a = r.f.slice(-3), v = plus1(a); return {v, how:`${a} + 111 → ${v}`}; }}
+];
+const FX_KIND = {
+  digit: {label:"เลขเด่น 1 ตัว", hit:"ถูกเมื่อเลขนี้อยู่ในเลขท้าย 2 ตัว", p: () => 0.19},
+  two:   {label:"เลขท้าย 2 ตัว", hit:"ถูกเมื่อตรงเลขท้าย 2 ตัว", p: () => 0.01},
+  three: {label:"เลข 3 ตัว", hit:"ถูกเมื่อตรงเลขหน้าหรือเลขท้าย 3 ตัว", p: nx => 1 - Math.pow(0.999, (nx.tf||[]).length + (nx.tl||[]).length)}
+};
+function fxHit(F, v, nx){
+  if (F.kind === "digit") return nx.t.includes(v);
+  if (F.kind === "two") return nx.t === v;
+  return [...(nx.tf||[]), ...(nx.tl||[])].includes(v);
+}
+function binomUpper(k, n, p){ // P(X >= k) when each draw is a fair guess
+  if (k <= 0) return 1;
+  let s = 0;
+  for (let j = k; j <= n; j++) s += Math.exp(gammaln(n+1) - gammaln(j+1) - gammaln(n-j+1) + j*Math.log(p) + (n-j)*Math.log(1-p));
+  return Math.min(1, s);
+}
+function backtest(){
+  return FORMULAS.map(F => {
+    let n = 0, hits = 0, exp = 0, last = null, recent = [];
+    for (let i = 1; i < draws.length; i++){
+      const pv = draws[i-1], nx = draws[i];
+      if (!pv.t || !pv.f || !nx.t) continue;
+      const v = F.calc(pv).v, h = fxHit(F, v, nx);
+      n++; exp += FX_KIND[F.kind].p(nx);
+      if (h){ hits++; last = nx.d; }
+      if (i >= draws.length - 10) recent.push(h);
+    }
+    const p0 = exp / n, pval = binomUpper(hits, n, p0);
+    return {F, n, hits, exp, p0, pval, last, recent, better: pval < 0.05 / FORMULAS.length};
+  });
+}
+let fxCache = null;
+let fxPick = load("lekdang-fx-pick", ["sum","diff"]);
+if (!Array.isArray(fxPick)) fxPick = ["sum","diff"];
+function pickSet(r){ // numbers from the chosen formulas, applied to draw r
+  const digits = [], twos = [], threes = [];
+  FORMULAS.filter(F => fxPick.includes(F.id)).forEach(F => { const v = F.calc(r).v; (F.kind === "digit" ? digits : F.kind === "two" ? twos : threes).push(v); });
+  const D = [...new Set(digits)], set2 = new Set(twos);
+  for (let i = 0; i < 100; i++){ const n = String(i).padStart(2,"0"); if (D.some(d => n.includes(d))) set2.add(n); }
+  const pairs = D.length >= 2 ? [...new Set(D.flatMap(a => D.filter(b => b !== a).map(b => a + b)))].sort() : [];
+  return {D, twos:[...new Set(twos)], threes:[...new Set(threes)], set2:[...set2].sort(), pairs};
+}
+function pickBacktest(){
+  let n = 0, hit = 0, exp = 0, pn = 0, phit = 0, pexp = 0, last = null, recent = 0;
+  for (let i = 1; i < draws.length; i++){
+    const pv = draws[i-1], nx = draws[i];
+    if (!pv.t || !pv.f || !nx.t) continue;
+    const P = pickSet(pv); if (!P.set2.length) continue;
+    n++; exp += P.set2.length / 100;
+    if (P.set2.includes(nx.t)){ hit++; last = nx.d; if (i >= draws.length - 10) recent++; }
+    if (P.pairs.length){ pn++; pexp += P.pairs.length / 100; if (P.pairs.includes(nx.t)) phit++; }
+  }
+  return {n, hit, exp, pn, phit, pexp, last, recent};
+}
+function pickPanel(base){
+  const names = FORMULAS.filter(F => fxPick.includes(F.id)).map(F => F.name);
+  if (!names.length) return `<div class="panel fx-mine"><h2>สูตรที่ใช้</h2><p class="muted" style="margin-top:6px">กด "ใช้สูตรนี้" ที่สูตรด้านล่าง แอพจะรวมเลขจากสูตรที่เลือกเป็นชุดเดียว พร้อมผลทดสอบย้อนหลังของชุดนั้น</p></div>`;
+  const P = pickSet(base), B = pickBacktest();
+  const pct1 = x => (x * 100).toFixed(1).replace(/\.0$/, "") + "%";
+  const cost = P.set2.length * 80;
+  return `<div class="panel fx-mine">
+    <div class="head-row"><h2>สูตรที่ใช้ งวด ${thDate(currentDate)}</h2></div>
+    <p class="small muted" style="margin-top:2px">${names.join(" + ")} · คำนวณจากงวด ${thDate(base.d)}</p>
+    ${P.D.length ? `<div class="mine-digits"><span class="lb">เลขเด่น</span>${P.D.map(d => `<span class="dg">${d}</span>`).join("")}</div>` : ""}
+    ${P.pairs.length ? `<p style="margin-top:10px">คู่เด่นจากสูตร (เลขเด่นจับคู่กัน): <b class="num" style="font-size:1.2rem;color:var(--gold)">${P.pairs.join("  ")}</b></p>` : ""}
+    ${P.threes.length ? `<p style="margin-top:6px">เลข 3 ตัว: <b class="num">${P.threes.join("  ")}</b></p>` : ""}
+    <h3 style="margin-top:12px">ชุดเลขท้าย 2 ตัว ${P.set2.length} เลข${P.D.length ? " (ทุกเลขที่มีเลขเด่น)" : ""}</h3>
+    <div class="numgrid set2">${P.set2.map(n => `<span class="${P.pairs.includes(n) ? "pair" : ""}">${n}</span>`).join("")}</div>
+    <div class="actions" style="margin-top:10px"><button class="btn" type="button" id="copyPick">คัดลอกชุดเลข</button></div>
+    <div class="toast" id="pickMsg" role="status"></div>
+    <div class="fx-sum">
+      <div class="box"><div class="k">ซื้อครบชุด</div><div class="v">${cost.toLocaleString("th-TH")}</div><div class="k">${P.set2.length} ใบ × 80 บาท</div></div>
+      <div class="box"><div class="k">โอกาสถูกท้าย 2 ตัว</div><div class="v">${P.set2.length}%</div><div class="k">ถูก 1 ใบ ได้ 2,000 บาท</div></div>
+      <div class="box"><div class="k">ย้อนหลังชุดนี้ถูก</div><div class="v">${pct1(B.hit / B.n)}</div><div class="k">สุ่มคาด ${pct1(B.exp / B.n)}</div></div>
+    </div>
+    <p class="small" style="margin-top:10px">ย้อนหลัง ${B.n} งวด ชุดเลขจากสูตรนี้ถูกเลขท้าย 2 ตัว <b>${B.hit}</b> งวด สุ่มเลือกเลขจำนวนเท่ากันคาดว่าถูก ${fmt(B.exp,1)} งวด${B.pn ? ` · คู่เด่นถูก <b>${B.phit}</b> จาก ${B.pn} งวด (สุ่มคาด ${fmt(B.pexp,1)})` : ""}${B.last ? ` · ถูกล่าสุดงวด ${thDate(B.last)}` : ""}</p>
+    <p class="small muted" style="margin-top:6px">ซื้อครบชุดทุกงวด ${cost.toLocaleString("th-TH")} บาท ได้รางวัลเลขท้าย 2 ตัวคืนเฉลี่ย ${(P.set2.length * 20).toLocaleString("th-TH")} บาทต่องวด รวมรางวัลอื่นแล้วได้คืนราว 60% ของเงินที่ซื้อ</p>
+  </div>`;
+}
+function renderFormula(){
+  const el = $("p-fx"); if (!el) return;
+  const R = backtest(); fxCache = R;
+  const base = draws[draws.length - 1];
+  const nBetter = R.filter(x => x.better).length;
+  const hitsAll = R.reduce((s,x) => s + x.hits, 0), expAll = R.reduce((s,x) => s + x.exp, 0);
+  const pct1 = x => (x * 100).toFixed(1).replace(/\.0$/, "") + "%";
+  const card = x => {
+    const next = x.F.calc(base), K = FX_KIND[x.F.kind];
+    const real = x.hits / x.n, rand = x.p0, mx = Math.max(real, rand) || 1;
+    const verdict = x.better ? `<span class="chip hit">ดีกว่าการสุ่ม</span>`
+      : `<span class="chip">${x.hits >= x.exp ? "ใกล้เคียงการสุ่ม" : "ต่ำกว่าการสุ่มเล็กน้อย"}</span>`;
+    return `<div class="fx-card">
+      <div><h3>${x.F.name}</h3><div class="small muted">${K.label} · ${x.F.desc}</div>
+        <button class="btn ${fxPick.includes(x.F.id) ? "" : "ghost"} sm fx-pickbtn" type="button" data-fx-pick="${x.F.id}" aria-pressed="${fxPick.includes(x.F.id)}">${fxPick.includes(x.F.id) ? "✓ ใช้สูตรนี้อยู่" : "ใช้สูตรนี้"}</button></div>
+      <div class="fx-next" aria-label="เลขงวดหน้าจากสูตรนี้"><div class="k">งวดหน้า</div><div class="v">${next.v}</div></div>
+      <div class="fx-how">จากงวด ${thDate(base.d)}: ${next.how}</div>
+      <div class="fx-stat">
+        <div>ย้อนหลังถูก <b class="num">${x.hits}</b> จาก <b class="num">${x.n}</b> งวด (${pct1(real)}) · สุ่มคาดว่าถูก ${fmt(x.exp,1)} งวด (${pct1(rand)}) ${verdict}</div>
+        <div class="fx-bars">
+          <span>สูตรนี้</span><div class="track"><div class="fill real" style="width:${(real/mx*100).toFixed(1)}%"></div></div><span class="n">${pct1(real)}</span>
+          <span>สุ่มเดา</span><div class="track"><div class="fill rand" style="width:${(rand/mx*100).toFixed(1)}%"></div></div><span class="n">${pct1(rand)}</span>
+        </div>
+        <div class="small muted">${K.hit}${x.last ? ` · ถูกล่าสุดงวด ${thDate(x.last)}` : ""} · 10 งวดล่าสุดถูก ${x.recent.filter(Boolean).length} ครั้ง</div>
+      </div>
+    </div>`;
+  };
+  el.innerHTML = pickPanel(base) + `
+    <div class="panel">
+      <h2>สูตรหวยแม่นจริงไหม</h2>
+      <p class="small muted" style="margin-top:4px">นำสูตรยอดนิยมมาคำนวณจากผลงวดก่อน แล้วเทียบกับผลงวดถัดไปจริง ทุกงวดตั้งแต่ ${thDate(draws[0].d)} เทียบกับการเดาแบบสุ่มที่ทายจำนวนเลขเท่ากัน</p>
+      <div class="fx-sum">
+        <div class="box"><div class="k">สูตรที่ทดสอบ</div><div class="v">${R.length}</div></div>
+        <div class="box"><div class="k">ดีกว่าการสุ่ม</div><div class="v">${nBetter} สูตร</div></div>
+        <div class="box"><div class="k">ถูกรวมทุกสูตร</div><div class="v">${hitsAll}</div><div class="k">สุ่มคาด ${fmt(expAll,0)}</div></div>
+      </div>
+      <p style="margin-top:10px">${nBetter === 0 ? "ไม่มีสูตรไหนทายงวดถัดไปได้ดีกว่าการสุ่ม ทุกสูตรถูกในอัตราใกล้เคียงกับการเลือกเลขมั่วๆ เพราะเครื่องออกรางวัลไม่รู้ว่างวดก่อนออกอะไร" : `มี ${nBetter} สูตรที่ถูกบ่อยกว่าการสุ่มเกินกว่าที่ความบังเอิญจะอธิบายได้ ควรดูต่อหลายงวดก่อนเชื่อ`}</p>
+    </div>
+    <div class="note">ตัวเลข "งวดหน้า" ในแต่ละสูตรคำนวณจากผลงวด ${thDate(base.d)} ใช้เล่นเพื่อความสนุก โอกาสถูกเท่ากับเลขอื่นทุกตัว</div>
+    <div class="panel">${R.map(card).join("")}</div>
+    <p class="small muted">"ดีกว่าการสุ่ม" ใช้เกณฑ์ทางสถิติที่เข้มขึ้นตามจำนวนสูตร เพราะยิ่งทดสอบหลายสูตร ยิ่งมีโอกาสเจอสูตรที่ดูแม่นโดยบังเอิญ</p>`;
+}
+
 /* ---------- render: history ---------- */
 function drawNums(r, hot){
   const H = new Set((hot||[]).map(h=>h.n));
@@ -958,11 +1133,11 @@ function refresh(){
   COMPACT = compactByDate();
   draws = allDraws(); S = buildStats(draws); currentDate = pickCurrent();
   renderStub(); renderResults(); renderChecker(); renderHot(); renderHist();
-  if (S.N !== lastN){ renderStat(); lastN = S.N; }
+  if (S.N !== lastN){ renderStat(); renderFormula(); lastN = S.N; }
 }
 function setTab(t){
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab===t));
-  ["res","chk","hot","hist","stat"].forEach(k => $("p-"+k).hidden = k!==t);
+  ["res","chk","hot","fx","hist","stat"].forEach(k => $("p-"+k).hidden = k!==t);
   try { localStorage.setItem("lekdang-tab2", t); } catch(e){}
 }
 function simulate(){
@@ -980,6 +1155,14 @@ let clearArmed = false;
 document.addEventListener("click", async e => {
   const tab = e.target.closest(".tabs button"); if (tab) return setTab(tab.dataset.tab);
   const sh = e.target.closest("[data-share]"); if (sh) return openShare(sh.dataset.share);
+  const fp = e.target.closest("[data-fx-pick]");
+  if (fp){ const id = fp.dataset.fxPick; fxPick = fxPick.includes(id) ? fxPick.filter(x => x !== id) : fxPick.concat(id); save("lekdang-fx-pick", fxPick); renderFormula(); renderStub(); return; }
+  if (e.target.id === "copyPick"){
+    const txt = pickSet(draws[draws.length-1]).set2.join(" ");
+    const msg = m => { const el = $("pickMsg"); if (el) el.textContent = m; };
+    try { navigator.clipboard.writeText(txt).then(() => msg("คัดลอกแล้ว"), () => msg("คัดลอกไม่ได้ เลือกเลขจากตารางด้านบนแทน")); } catch(err){ msg("คัดลอกไม่ได้ เลือกเลขจากตารางด้านบนแทน"); }
+    return;
+  }
   if (e.target.id === "nativeShare") return nativeShare();
   if (e.target.id === "copyShare") return copyShare();
   const go = e.target.closest("[data-go]"); if (go){ if (go.dataset.go === "chk"){ chkDate = resDate; chkPinned = resDate !== checkerDefault(); renderChecker(); } return setTab(go.dataset.go); }
@@ -1151,7 +1334,7 @@ function copyShare(){
 /* ---------- start ---------- */
 refresh();
 $("resDate").value = currentDate; $("hotDate").value = currentDate;
-setTab((() => { try { const t = localStorage.getItem("lekdang-tab2"); return ["res","chk","hot","hist","stat"].includes(t) ? t : "res"; } catch(e){ return "res"; } })());
+setTab((() => { try { const t = localStorage.getItem("lekdang-tab2"); return ["res","chk","hot","fx","hist","stat"].includes(t) ? t : "res"; } catch(e){ return "res"; } })());
 connectDb();
 if (IN_CLAUDE){ apiOK = false; proxyOK = false; } // หน้าใน Claude ออกเน็ตตรงไม่ได้ ใช้ผลที่ Claude อัพเดทลงฐานข้อมูลแทน
 (async () => {
