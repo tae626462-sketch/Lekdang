@@ -241,6 +241,19 @@ details.plain summary{cursor:pointer;font-weight:600;font-family:var(--display)}
 .lr-row .nm small{display:block;color:var(--muted);font-size:.75rem}
 .lr-row .pv{font-family:var(--display);font-weight:700;font-size:1.25rem;letter-spacing:.05em;min-width:48px;text-align:center}
 .lr-row.hit .pv{color:var(--hit)}
+.fd-best{display:grid;grid-template-columns:1fr auto;gap:6px 14px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+.fd-best .fx-next{grid-row:1 / span 2}
+.fd-formula{font-size:.85rem;color:var(--muted)}
+.fd-cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;grid-column:1 / -1}
+.fd-cmp div{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.75rem;color:var(--muted)}
+.fd-cmp b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.fd-cmp .bad b{color:var(--hit)}
+.prog{height:8px;border-radius:4px;background:var(--paper);border:1px solid var(--line);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--cell);width:0}
+.wf-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px;font-variant-numeric:tabular-nums}
+.wf-table th{font-weight:500;color:var(--muted);text-align:left;font-size:.75rem;padding:4px 0;border-bottom:1px solid var(--line)}
+.wf-table td{padding:5px 0;border-bottom:1px solid var(--line)}
+.wf-table td.ok{color:var(--hit);font-weight:600}
 .install{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;border-color:var(--gold)}
 .install img{width:48px;height:48px;border-radius:11px}
 .install-txt{min-width:0}
@@ -954,6 +967,100 @@ function pickBacktest(){
   }
   return {n, hit, exp, pn, phit, pexp, last, recent};
 }
+/* ---------- formula finder: let the computer search formulas, then test on draws it never saw ---------- */
+const FD_SRC = ["หลักแสน ร.1","หลักหมื่น ร.1","หลักพัน ร.1","หลักร้อย ร.1","หลักสิบ ร.1","หลักหน่วย ร.1","หลักสิบ ท้ายล่าง","หลักหน่วย ท้ายล่าง"];
+const fdDigit = (r, s) => s < 6 ? +r.f[s] : +r.t[s-6];
+const FD_DF = (() => { const L = [];
+  for (let a=0;a<8;a++) for (let k=0;k<10;k++) L.push({op:"c",a,k});
+  for (let a=0;a<8;a++) for (let b=a+1;b<8;b++) for (let k=0;k<10;k++) L.push({op:"+",a,b,k});
+  for (let a=0;a<8;a++) for (let b=0;b<8;b++) if (a!==b) for (let k=0;k<10;k++) L.push({op:"-",a,b,k});
+  return L; })();
+function fdEval(F, r){ const x = fdDigit(r,F.a); if (F.op==="c") return (x+F.k)%10; const y = fdDigit(r,F.b); return F.op==="+" ? (x+y+F.k)%10 : ((x-y+F.k)%10+10)%10; }
+function fdText(F){ const k = F.k ? ` + ${F.k}` : ""; return F.op==="c" ? `${FD_SRC[F.a]}${k}` : `${FD_SRC[F.a]} ${F.op==="+"?"+":"−"} ${FD_SRC[F.b]}${k}`; }
+function fdHow(F, r){ const x = fdDigit(r,F.a), k = F.k ? ` + ${F.k}` : "", v = fdEval(F,r);
+  if (F.op==="c") return F.k ? `${x}${k} → ${v}` : `${v}`;
+  const y = fdDigit(r,F.b), raw = F.op==="+" ? x+y+F.k : x-y+F.k; return `${x} ${F.op==="+"?"+":"−"} ${y}${k} = ${raw} → ${v}`; }
+function fdPop(x){ x -= (x>>>1)&0x55555555; x = (x&0x33333333)+((x>>>2)&0x33333333); return (((x+(x>>>4))&0x0F0F0F0F)*0x01010101)>>>24; }
+function fdSearch(list, testN){
+  const pairs = []; for (let i=1;i<list.length;i++){ const p=list[i-1], n=list[i]; if (p.f && p.t && n.t) pairs.push([p,n]); }
+  const test = testN ? pairs.slice(-testN) : [], train = testN ? pairs.slice(0,-testN) : pairs;
+  const lead = FD_DF.map(F => { let tr=0, te=0; train.forEach(([p,n]) => { if (n.t.includes(String(fdEval(F,p)))) tr++; }); test.forEach(([p,n]) => { if (n.t.includes(String(fdEval(F,p)))) te++; }); return {F, tr, te}; }).sort((x,y) => y.tr - x.tr).slice(0,5);
+  const W = Math.ceil(train.length/32);
+  const bits = pos => FD_DF.map(F => { const b = new Uint32Array(W); train.forEach(([p,n],i) => { if (fdEval(F,p) === +n.t[pos]) b[i>>5] |= 1<<(i&31); }); return b; });
+  const T0 = bits(0), T1 = bits(1), top = []; let minTop = -1;
+  for (let i=0;i<FD_DF.length;i++){ const A = T0[i];
+    for (let j=0;j<FD_DF.length;j++){ const B = T1[j]; let s=0; for (let w=0;w<W;w++) s += fdPop(A[w]&B[w]);
+      if (s > minTop || top.length < 5){ top.push({i,j,tr:s}); top.sort((x,y)=>y.tr-x.tr); if (top.length>5) top.pop(); minTop = top[top.length-1].tr; } } }
+  top.forEach(x => { x.A = FD_DF[x.i]; x.B = FD_DF[x.j]; x.te = test.filter(([p,n]) => String(fdEval(x.A,p))+String(fdEval(x.B,p)) === n.t).length; });
+  return {nTrain: train.length, nTest: test.length, lead, pair: top};
+}
+let FD = {state:"idle", R:null, Rall:null, wf:null, prog:0, n:-1};
+function fdRun(){
+  if (FD.state === "running") return;
+  FD = {state:"running", R:null, Rall:null, wf:null, prog:0, n:draws.length};
+  try { localStorage.setItem("lekdang-finder-on", "1"); } catch(e){}
+  fdUpdate();
+  setTimeout(() => {
+    FD.R = fdSearch(draws, 48); FD.Rall = fdSearch(draws, 0); fdUpdate();
+    const K = 48, start = draws.length - K, rows = [];
+    let i = start;
+    const step = () => {
+      if (i >= draws.length){ FD.wf = {K, rows}; FD.state = "done"; return fdUpdate(); }
+      const R = fdSearch(draws.slice(0, i), 0), prev = draws[i-1], nx = draws[i];
+      const p2 = String(fdEval(R.pair[0].A, prev)) + String(fdEval(R.pair[0].B, prev)), ld = String(fdEval(R.lead[0].F, prev));
+      rows.push({d:nx.d, t:nx.t, p2, ld, ph: p2 === nx.t, lh: nx.t.includes(ld)});
+      i++; FD.prog = (i - start) / K;
+      const bar = $("fdProg"); if (bar) bar.style.width = (FD.prog*100).toFixed(0) + "%";
+      setTimeout(step, 0);
+    };
+    step();
+  }, 40);
+}
+function fdUpdate(){ const el = $("finderBox"); if (el) el.innerHTML = finderHtml(); }
+function finderHtml(){
+  const intro = `<h2>ให้คอมพิวเตอร์ค้นหาสูตร</h2>
+    <p class="small muted" style="margin-top:4px">ลองทุกสูตรที่สร้างจากเลขงวดก่อน (รางวัลที่ 1 และเลขท้าย 2 ตัว บวก ลบ แล้วเอาหลักหน่วย) รวม ${FD_DF.length.toLocaleString("th-TH")} สูตรเลขเด่น และ ${(FD_DF.length**2).toLocaleString("th-TH")} สูตรเลขท้าย 2 ตัว เลือกสูตรที่ถูกบ่อยที่สุดในอดีต แล้วทดสอบกับ 48 งวดล่าสุดที่สูตรไม่เคยเห็น</p>`;
+  if (FD.state === "idle") return `${intro}<div class="actions" style="margin-top:10px"><button class="btn" type="button" id="fdRunBtn">ค้นหาสูตรจากผลย้อนหลัง</button></div><p class="small muted" style="margin-top:6px">ใช้เวลาประมาณ 5–15 วินาที</p>`;
+  if (!FD.R) return `${intro}<p style="margin-top:10px">กำลังทดสอบสูตร…</p><div class="prog"><i style="width:3%"></i></div>`;
+  const R = FD.R, A = FD.Rall, base = draws[draws.length-1];
+  const pct = (a,b) => b ? (a*100/b).toFixed(1).replace(/\.0$/,"") + "%" : "–";
+  const bp = R.pair[0], bl = R.lead[0], ap = A.pair[0], al = A.lead[0];
+  const nextPair = String(fdEval(ap.A, base)) + String(fdEval(ap.B, base)), nextLead = fdEval(al.F, base);
+  const pairCard = `<div class="fd-best">
+      <div><h3>สูตรเลขท้าย 2 ตัวที่ดีที่สุด</h3>
+        <div class="fd-formula">หลักสิบ = ${fdText(bp.A)} · หลักหน่วย = ${fdText(bp.B)} (เอาหลักหน่วยของผลบวก)</div></div>
+      <div class="fx-next"><div class="k">งวดหน้า*</div><div class="v">${nextPair}</div></div>
+      <div class="fd-cmp">
+        <div>ช่วงเรียนรู้ ${R.nTrain} งวด<b>${bp.tr} ครั้ง</b>${pct(bp.tr,R.nTrain)}</div>
+        <div class="${bp.te*100/R.nTest < 1 ? "bad" : ""}">งวดใหม่ ${R.nTest} งวด<b>${bp.te} ครั้ง</b>${pct(bp.te,R.nTest)}</div>
+        <div>สุ่มเดา<b>1%</b>${fmt(R.nTest*0.01,1)} ใน ${R.nTest} งวด</div>
+      </div></div>`;
+  const leadCard = `<div class="fd-best">
+      <div><h3>สูตรเลขเด่นที่ดีที่สุด</h3><div class="fd-formula">${fdText(bl.F)} (เอาหลักหน่วย)</div></div>
+      <div class="fx-next"><div class="k">งวดหน้า*</div><div class="v">${nextLead}</div></div>
+      <div class="fd-cmp">
+        <div>ช่วงเรียนรู้<b>${pct(bl.tr,R.nTrain)}</b>${bl.tr} จาก ${R.nTrain}</div>
+        <div class="${bl.te/R.nTest < 0.19 ? "bad" : ""}">งวดใหม่<b>${pct(bl.te,R.nTest)}</b>${bl.te} จาก ${R.nTest}</div>
+        <div>สุ่มเดา<b>19%</b>เลขเด่นตัวไหนก็ได้</div>
+      </div></div>`;
+  let wf = "";
+  if (FD.wf){
+    const rows = FD.wf.rows, ph = rows.filter(r=>r.ph).length, lh = rows.filter(r=>r.lh).length;
+    wf = `<h3 style="margin-top:14px">หาสูตรใหม่ก่อนทุกงวด</h3>
+      <p class="small" style="margin-top:4px">ก่อนแต่ละงวดใน ${FD.wf.K} งวดล่าสุด ให้คอมพิวเตอร์หาสูตรที่ดีที่สุดจากผลก่อนหน้านั้นใหม่ทั้งหมด แล้วใช้ทายงวดนั้น: เลขท้าย 2 ตัวถูก <b>${ph}</b> งวด (สุ่มคาด ${fmt(FD.wf.K*0.01,1)}) · เลขเด่นถูก <b>${lh}</b> งวด (สุ่มคาด ${fmt(FD.wf.K*0.19,1)})</p>
+      <div class="grid-wrap"><table class="wf-table"><thead><tr><th>งวด</th><th>สูตรทาย 2 ตัว</th><th>เลขเด่น</th><th>ออกจริง</th></tr></thead><tbody>
+      ${rows.slice(-10).reverse().map(r => `<tr><td>${thDate(r.d)}</td><td class="${r.ph?"ok":""}">${r.p2}${r.ph?" ✓":""}</td><td class="${r.lh?"ok":""}">${r.ld}${r.lh?" ✓":""}</td><td><b class="num">${r.t}</b></td></tr>`).join("")}
+      </tbody></table></div>`;
+  } else if (FD.state === "running"){
+    wf = `<h3 style="margin-top:14px">หาสูตรใหม่ก่อนทุกงวด</h3><p class="small muted">กำลังจำลองการหาสูตรใหม่ก่อนแต่ละงวดใน 48 งวดล่าสุด…</p><div class="prog"><i id="fdProg" style="width:${(FD.prog*100).toFixed(0)}%"></i></div>`;
+  }
+  const verdict = bp.te * 100 / R.nTest <= 2 ? `สูตรที่ดีที่สุดถูกในอดีต ${bp.tr} ครั้ง สูงกว่าการสุ่มราว ${fmt(bp.tr/(R.nTrain*0.01),1)} เท่า แต่พอเจองวดใหม่ถูกแค่ ${bp.te} ครั้ง เพราะในสูตรเกือบล้านแบบ ต้องมีบางสูตรที่บังเอิญตรงกับอดีตบ่อย สูตรแบบนี้จึงทายอนาคตไม่ได้`
+    : `สูตรที่ดีที่สุดถูกงวดใหม่ ${bp.te} จาก ${R.nTest} งวด ควรติดตามต่ออีกหลายงวดก่อนสรุป`;
+  return `${intro}${pairCard}${leadCard}
+    <p class="small" style="margin-top:10px">${verdict}</p>${wf}
+    <p class="small muted" style="margin-top:10px">* เลขงวดหน้ามาจากสูตรที่ดีที่สุดเมื่อเรียนรู้จากผลทั้งหมดถึงงวด ${thDate(base.d)} โอกาสถูกเท่ากับเลขอื่น · ผลจะคำนวณใหม่เองเมื่อมีผลงวดใหม่</p>
+    <div class="actions" style="margin-top:8px"><button class="btn ghost" type="button" id="fdRunBtn" ${FD.state==="running"?"disabled":""}>ค้นหาใหม่</button></div>`;
+}
 let fxRound = null; // date of the draw being checked; null = latest
 function lastRoundPanel(){
   if (draws.length < 2) return "";
@@ -1045,7 +1152,8 @@ function renderFormula(){
       </div>
     </div>`;
   };
-  el.innerHTML = pickPanel(base) + lastRoundPanel() + `
+  if (FD.state !== "idle" && FD.n !== draws.length && FD.state !== "running") setTimeout(fdRun, 300);
+  el.innerHTML = pickPanel(base) + lastRoundPanel() + `<div class="panel" id="finderBox">${finderHtml()}</div>` + `
     <div class="panel">
       <h2>สูตรหวยแม่นจริงไหม</h2>
       <p class="small muted" style="margin-top:4px">นำสูตรยอดนิยมมาคำนวณจากผลงวดก่อน แล้วเทียบกับผลงวดถัดไปจริง ทุกงวดตั้งแต่ ${thDate(draws[0].d)} เทียบกับการเดาแบบสุ่มที่ทายจำนวนเลขเท่ากัน</p>
@@ -1210,6 +1318,7 @@ document.addEventListener("click", async e => {
   const sh = e.target.closest("[data-share]"); if (sh) return openShare(sh.dataset.share);
   const fp = e.target.closest("[data-fx-pick]");
   if (fp){ const id = fp.dataset.fxPick; fxPick = fxPick.includes(id) ? fxPick.filter(x => x !== id) : fxPick.concat(id); save("lekdang-fx-pick", fxPick); renderFormula(); renderStub(); return; }
+  if (e.target.id === "fdRunBtn") return fdRun();
   if (e.target.id === "copyPick"){
     const txt = pickSet(draws[draws.length-1]).set2.join(" ");
     const msg = m => { const el = $("pickMsg"); if (el) el.textContent = m; };
@@ -1398,5 +1507,6 @@ if (IN_CLAUDE){ apiOK = false; proxyOK = false; } // หน้าใน Claude �
   else if (!getFull(e).complete) await liveFetch(e);
 })();
 setInterval(tick, 20000);
+try { if (localStorage.getItem("lekdang-finder-on") === "1") setTimeout(fdRun, 1500); } catch(e){}
 document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
 </script>
